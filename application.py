@@ -195,6 +195,8 @@ def process_story(message):
 def process_story_answer(message):
     chat_id = message.chat.id
     user = userManager.get_user(chat_id=chat_id)
+    if not user:
+        return
     if not Story.is_processed(user.get_pointer()):
         answer = message.text
         jump = Story.get_next_jump(Story.current_state(user.get_pointer()))
