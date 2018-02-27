@@ -1,4 +1,5 @@
 from collections import Iterable
+
 from questgen import facts
 
 
@@ -163,48 +164,119 @@ class Jump:
 class State:
     def __init__(self, uid):
         self.uid = uid
-        
-    
-class User:
-    def __init__(self, name):
-        self.name = name
-        self._pointer = facts.Pointer()
-        
-    def update_pointer(self, new_pointer):
-        self._pointer = new_pointer
-        
-    def get_pointer(self):
-        return self._pointer
-    
-        
-class UserManager:
-    def __init__(self):
-        self._users = {}
-        
-    def register(self, chat_id, user):
-        if chat_id in self._users:
-            print('already register')
-            return
-        self._users[chat_id] = user
-        
-    def get_user(self, chat_id):
-        return self._users[chat_id]
-    
-    
-steal_choice = facts.Choice(uid='st_steal')
-start = Start(uid='st_start')
+
+start = Start(uid='intro')
+call_colonel = State(uid="call_colonel")
+# call_general = State(uid="call_general")
+call_captain_new = State(uid="call_new_captain")
+call_new_general = State(uid="call_new_general")
+call_new_lieutenant = State(uid="call_new_lieutenant")
+call_new_colonel = State(uid="call_new_colonel")
+
+
+general_choice = facts.Choice(uid="general_choice")
+gp1 = ChoicePath(choice=general_choice.uid, uid='general_choice.help', state_to='call_captain', label='Молча повиноваться')
+gp2 = ChoicePath(choice=general_choice.uid, uid='general_choice.end', state_to='dismiss_and_finish', label='Отказаться и ждать что будет')
+
+
+knock_to_ceo = State(uid="knock_to_ceo")
+call_captain = State(uid="call_captain")
+
+
+colonel_choice = facts.Choice(uid="colonel_choice")
+cc1 = ChoicePath(choice=colonel_choice.uid, uid='colonel_choice.help', state_to='call_captain', label='Да чего уж, поможем')
+cc2 = ChoicePath(choice=colonel_choice.uid, uid='colonel_choice.knock', state_to='knock_to_ceo', label='Втихую настучать главнокомандующему')
+
+
+knock_to_general = State(uid="knock_to_general")
+call_lieutenant = State(uid="call_lieutenant")
+
+captain_choice = facts.Choice(uid="captain_choice")
+cpc1 = ChoicePath(choice=captain_choice.uid, uid='captain_choice.help', state_to='call_lieutenant', label='Безвозмедно помочь')
+cpc2 = ChoicePath(choice=captain_choice.uid, uid='captain_choice.knock', state_to='knock_to_general', label='Доложить Генералу о произволе')
+
+
+call_corporal = State(uid="call_corporal")
+knock_to_colonel = State(uid="knock_to_colonel")
+
+lieutenant_choice = facts.Choice(uid="lieutenant_choice")
+lc1 = ChoicePath(choice=lieutenant_choice.uid, uid='lieutenant_choice.help', state_to='call_corporal', label='Рад служить!')
+lc2 = ChoicePath(choice=lieutenant_choice.uid, uid='lieutenant_choice.knock', state_to='knock_to_colonel', label='Доложить Полковнику о неуставных отношениях')
+
+
+call_newbie = State(uid="call_newbie")
+knock_to_captain = State(uid="knock_to_captain")
+
+corporal_choice = facts.Choice(uid="corporal_choice")
+corpc1 = ChoicePath(choice=corporal_choice.uid, uid='corporal_choice.help', state_to='call_newbie', label='Подъём дух, деревья сами себя не срубят!')
+corpc2 = ChoicePath(choice=corporal_choice.uid, uid='corporal_choice.knock', state_to='knock_to_captain', label='Товаришь капитан, разрешите доложить о нарушениях...')
+
+
+newbie_choice = facts.Choice(uid="newbie_choice")
+np1 = ChoicePath(choice=newbie_choice.uid, uid='newbie_choice.help', state_to='success_finish', label='Есть рубить отсюдова и до обеда!')
+np2 = ChoicePath(choice=newbie_choice.uid, uid='newbie_choice.knock', state_to='fail_finish', label='Спасибо, хватит с меня, пора валить!')
+
+
 values = [
     start,
-    State(uid='st_wait'),
-    steal_choice,
-    ChoicePath(choice=steal_choice.uid, uid='st_steal.steal', state_to='st_finish_stealed', label='ограбить'),
-    ChoicePath(choice=steal_choice.uid, uid='st_steal.deliver', state_to='st_finish_delivered', label='сопроводить'),
+    call_colonel,
+    call_captain_new,
+    call_new_general,
+    call_new_lieutenant,
+    call_new_colonel,
+    general_choice,
+    gp1,
+    gp2,
+    knock_to_ceo,
+    call_captain,
+    colonel_choice,
+    cc1,
+    cc2,
+    knock_to_general,
+    call_lieutenant,
+    captain_choice,
+    cpc1,
+    cpc2,
+    call_corporal,
+    knock_to_colonel,
+    lieutenant_choice,
+    lc1,
+    lc2,
+    call_newbie,
+    knock_to_captain,
+    corporal_choice,
+    corpc1,
+    corpc2,
+    newbie_choice,
+    np1,
+    np2,
+    Jump(state_from="intro", state_to="call_colonel", label="Позвать полковника"),
     
-    Finish(uid='st_finish_delivered', results=(), start=start.uid),
-    Finish(uid='st_finish_stealed', results=(), start=start.uid),
-
-    Jump(state_from='st_start', state_to='st_wait', label="Приблизиться"),
-    Jump(state_from='st_wait', state_to='st_steal', label="Дальше"),
+    # Jump(state_from="call_general", state_to="general_choice", label="Надо подумать."),
+    Jump(state_from="call_new_general", state_to="general_choice", label="Выбрать бы правильно..."),
+    
+    Jump(state_from='call_colonel', state_to='colonel_choice', label="Что выбрать полковнику?"),
+    Jump(state_from='call_new_colonel', state_to='colonel_choice', label="Аккуратно, не торопимся"),
+    
+    Jump(state_from="call_lieutenant", state_to="lieutenant_choice", label="Честь имею!"),
+    Jump(state_from='call_new_lieutenant', state_to='lieutenant_choice', label="Спокойствие, главное спокойствие"),
+    
+    Jump(state_from="call_captain", state_to="captain_choice", label="Хммм..."),
+    Jump(state_from="call_new_captain", state_to="captain_choice", label="А-га..."),
+    
+    Jump(state_from="call_corporal", state_to="corporal_choice", label="Товаришь ефрейтор, на минуту"),
+    Jump(state_from="call_newbie", state_to="newbie_choice", label="А что если..."),
+    
+    
+    Jump(state_from="knock_to_ceo", state_to="call_new_general", label="Вызвать новоиспечённого генерала"),
+    Jump(state_from="knock_to_general", state_to="call_new_colonel", label="Полковника сюда"),
+    Jump(state_from="knock_to_colonel", state_to="call_new_captain", label="Капитан!"),
+    Jump(state_from="knock_to_captain", state_to="call_new_lieutenant", label="Найти лейтенанта, живо!"),
+    
+    Finish(uid='dismiss_and_finish', results=(), start=start.uid),
+    
+    Finish(uid='success_finish', results=(), start=start.uid),
+    Finish(uid='fail_finish', results=(), start=start.uid),
     
 ]
 
