@@ -1,4 +1,4 @@
-from questgen import facts
+# from questgen import facts
 import config
 import telebot
 import example
@@ -14,11 +14,11 @@ bot = telebot.TeleBot(config.token)
 class User:
     def __init__(self, name):
         self.name = name
-        self._pointer = facts.Pointer()
+        self._pointer = example.Pointer()
         self._step = 0
     
-    def update_pointer(self, new_pointer):
-        self._pointer = new_pointer
+    def update_pointer(self, **pointer_fields):
+        self._pointer.update(**pointer_fields)
     
     def get_pointer(self):
         return self._pointer
@@ -34,7 +34,7 @@ class User:
         
     def reset(self):
         self.reset_step()
-        self.update_pointer(facts.Pointer())
+        self.update_pointer(state=None)
         
 
 class UserManager:
@@ -207,7 +207,7 @@ def process_story_answer(message):
             # TODO setup warning message with retry
             return
         jump = jump[0]
-        user.update_pointer(new_pointer=user.get_pointer().change(state=jump.state_to))
+        user.update_pointer(state=jump.state_to)
         # final point
         if Story.is_processed(user.get_pointer()):
             bot.send_message(message.chat.id, actions_text[Story.current_state(user.get_pointer()).uid])
@@ -217,8 +217,7 @@ def process_story_answer(message):
 
 
 def helper(user, message):
-    new_pointer, current_action, possible_jumps = Story.step(user.get_pointer())
-    user.update_pointer(new_pointer=new_pointer)
+    current_action, possible_jumps = Story.step(user.get_pointer())
     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, row_width=1, resize_keyboard=True)
     markup.add(*(jump.label for jump in possible_jumps))
     msg = bot.send_message(message.chat.id, actions_text[current_action.uid], reply_markup=markup)

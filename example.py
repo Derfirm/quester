@@ -1,6 +1,6 @@
 from collections import Iterable
 
-from questgen import facts
+# from questgen import facts
 
 
 class KnowledgeBase:
@@ -88,18 +88,17 @@ class Story:
     def step(self, pointer):
         next_state = self.next_state(pointer)
         # next_jump = []
-        new_pointer = pointer
     
         state = self.current_state(pointer)
         if next_state:
             state = next_state
-            new_pointer = pointer.change(state=next_state.uid, jump=None)
+            pointer.update(state=next_state.uid)
     
-        next_jump = self.get_next_jump(self.current_state(new_pointer))
+        next_jump = self.get_next_jump(self.current_state(pointer))
         if not next_jump:
-            raise ValueError(self.current_state(new_pointer))
+            raise ValueError(self.current_state(pointer))
     
-        return new_pointer, state, next_jump
+        return state, next_jump
 
     def get_next_jump(self, state):
         jumps = self.get_available_jumps(state)
@@ -108,7 +107,7 @@ class Story:
         return jumps
 
     def get_available_jumps(self, state):
-        if isinstance(state, facts.Choice):
+        if isinstance(state, Choice):
             return [default for default in self.knowledge_base.filter(ChoicePath) if default.choice == state.uid]
 
         # if isinstance(state, facts.Question):
@@ -120,7 +119,7 @@ class Story:
 
     def need_concrete_answer(self, pointer):
         state = self.current_state(pointer)
-        if isinstance(state, facts.Choice):
+        if isinstance(state, Choice):
             return True
         return False
         
@@ -160,6 +159,19 @@ class Jump:
         self.label = label
         self.__class__.counter += 1
         
+class Choice:
+    def __init__(self, uid):
+        self.uid = uid        
+
+class Pointer:
+    def __init__(self):
+        self.state = None
+        self.jump = None
+
+    def update(self, **fields):
+        # TODO setup more clearly way to setattr
+        for field_name, field_values in fields.items():
+            setattr(self, field_name, field_values)
 
 class State:
     def __init__(self, uid):
@@ -174,7 +186,7 @@ call_new_lieutenant = State(uid="call_new_lieutenant")
 call_new_colonel = State(uid="call_new_colonel")
 
 
-general_choice = facts.Choice(uid="general_choice")
+general_choice = Choice(uid="general_choice")
 gp1 = ChoicePath(choice=general_choice.uid, uid='general_choice.help', state_to='call_captain', label='Молча повиноваться')
 gp2 = ChoicePath(choice=general_choice.uid, uid='general_choice.end', state_to='dismiss_and_finish', label='Отказаться и ждать что будет')
 
@@ -183,7 +195,7 @@ knock_to_ceo = State(uid="knock_to_ceo")
 call_captain = State(uid="call_captain")
 
 
-colonel_choice = facts.Choice(uid="colonel_choice")
+colonel_choice = Choice(uid="colonel_choice")
 cc1 = ChoicePath(choice=colonel_choice.uid, uid='colonel_choice.help', state_to='call_captain', label='Да чего уж, поможем')
 cc2 = ChoicePath(choice=colonel_choice.uid, uid='colonel_choice.knock', state_to='knock_to_ceo', label='Втихую настучать главнокомандующему')
 
@@ -191,7 +203,7 @@ cc2 = ChoicePath(choice=colonel_choice.uid, uid='colonel_choice.knock', state_to
 knock_to_general = State(uid="knock_to_general")
 call_lieutenant = State(uid="call_lieutenant")
 
-captain_choice = facts.Choice(uid="captain_choice")
+captain_choice = Choice(uid="captain_choice")
 cpc1 = ChoicePath(choice=captain_choice.uid, uid='captain_choice.help', state_to='call_lieutenant', label='Безвозмедно помочь')
 cpc2 = ChoicePath(choice=captain_choice.uid, uid='captain_choice.knock', state_to='knock_to_general', label='Доложить Генералу о произволе')
 
@@ -199,7 +211,7 @@ cpc2 = ChoicePath(choice=captain_choice.uid, uid='captain_choice.knock', state_t
 call_corporal = State(uid="call_corporal")
 knock_to_colonel = State(uid="knock_to_colonel")
 
-lieutenant_choice = facts.Choice(uid="lieutenant_choice")
+lieutenant_choice = Choice(uid="lieutenant_choice")
 lc1 = ChoicePath(choice=lieutenant_choice.uid, uid='lieutenant_choice.help', state_to='call_corporal', label='Рад служить!')
 lc2 = ChoicePath(choice=lieutenant_choice.uid, uid='lieutenant_choice.knock', state_to='knock_to_colonel', label='Доложить Полковнику о неуставных отношениях')
 
@@ -207,12 +219,12 @@ lc2 = ChoicePath(choice=lieutenant_choice.uid, uid='lieutenant_choice.knock', st
 call_newbie = State(uid="call_newbie")
 knock_to_captain = State(uid="knock_to_captain")
 
-corporal_choice = facts.Choice(uid="corporal_choice")
+corporal_choice = Choice(uid="corporal_choice")
 corpc1 = ChoicePath(choice=corporal_choice.uid, uid='corporal_choice.help', state_to='call_newbie', label='Подъём дух, деревья сами себя не срубят!')
 corpc2 = ChoicePath(choice=corporal_choice.uid, uid='corporal_choice.knock', state_to='knock_to_captain', label='Товаришь капитан, разрешите доложить о нарушениях...')
 
 
-newbie_choice = facts.Choice(uid="newbie_choice")
+newbie_choice = Choice(uid="newbie_choice")
 np1 = ChoicePath(choice=newbie_choice.uid, uid='newbie_choice.help', state_to='success_finish', label='Есть рубить отсюдова и до обеда!')
 np2 = ChoicePath(choice=newbie_choice.uid, uid='newbie_choice.knock', state_to='fail_finish', label='Спасибо, хватит с меня, пора валить!')
 
